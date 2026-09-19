@@ -44,7 +44,7 @@ with a servo-swept water jet — then returns to monitoring mode.
 | A2 | Flame sensor RIGHT — AO | |
 | D2 | Buzzer (+) | Active buzzer, other leg to GND |
 | D3 | Servo signal (orange) | Servo library on Timer1 |
-| D4 | Relay module IN | HIGH = pump ON |
+| D4 | Relay module IN | Pump ON — polarity set by `RELAY_ACTIVE_LOW` in `pump_control.h` |
 | D5 | L298N ENA | PWM, left motor speed |
 | D6 | L298N ENB | PWM, right motor speed |
 | D7 | L298N IN1 | Left motor direction |
@@ -154,8 +154,8 @@ printed on every fire event (≈0 ambient → 1023 at close range).
 | One motor runs backwards | Swap that motor's two wires at the L298N OUT terminals |
 | Robot turns the wrong way | LEFT/RIGHT sensors are swapped — swap A0/A2 wiring or the pin constants |
 | Servo twitches when pump runs | Pump noise/brown-out — power the servo separately, add a 470 µF cap across servo supply |
-| Pump never starts | Relay logic: some relay boards are **active-LOW** — invert `pumpOn()`/`pumpOff()`; also check the relay clicks when D4 toggles |
-| Pump runs at power-up | Should be impossible (D4 initialized LOW); verify wiring isn't forcing the relay closed |
+| Pump never starts | Relay logic: some relay boards are **active-LOW** — set `RELAY_ACTIVE_LOW = true` in `pump_control.h` and re-upload; also check the relay clicks when D4 toggles |
+| Pump runs at power-up | Should be impossible (the OFF level is written before `pinMode` for either polarity); if it happens, your relay board is active-LOW — set `RELAY_ACTIVE_LOW = true` |
 | Arduino resets when motors start | Motor EMF brown-out — common ground missing or Uno powered from the L298N 5 V while motors stall; use separate supply paths |
 | Robot oscillates around flame | `TURN_STEP_MS` too long or sensors mounted too close together — shorten the step or spread the sensors |
 | Attack starts too close / singes things | Lower `FLAME_FIGHT_THRESHOLD` so it stops farther away |

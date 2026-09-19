@@ -10,11 +10,18 @@
 // The pump is a small 5V/6V DC diaphragm pump switched through a relay
 // module (or logic-level MOSFET) on PIN_PUMP. The servo tilts the nozzle
 // left-right so the water stream sweeps across the flame base.
+//
+// RELAY_ACTIVE_LOW: most cheap relay boards are ACTIVE-LOW (IN pin pulled
+// LOW energizes the coil). Set this to true if your pump turns on when
+// D4 is LOW. The OFF level is written at boot so the pump can never be
+// running at power-up, whatever your board's polarity is.
 // ---------------------------------------------------------------------------
 
-const uint8_t  PIN_PUMP      = 4;    // relay/MOSFET gate pin (HIGH = pump on)
+const uint8_t  PIN_PUMP      = 4;    // relay/MOSFET gate pin
 const uint8_t  PIN_SERVO     = 3;    // nozzle aiming servo signal
 const uint8_t  PIN_BUZZER    = 2;    // active buzzer
+
+const bool RELAY_ACTIVE_LOW = false;  // true for typical opto relay boards
 
 const uint8_t  SERVO_CENTER  = 90;   // degrees, straight ahead
 const uint8_t  SERVO_SWEEP_MIN  = 55;  // sweep left limit
@@ -26,18 +33,23 @@ Servo nozzleServo;
 
 namespace pump {
 
+// Electrical level that keeps the pump OFF / turns it ON
+inline uint8_t pumpOffLevel() { return RELAY_ACTIVE_LOW ? HIGH : LOW; }
+inline uint8_t pumpOnLevel()  { return RELAY_ACTIVE_LOW ? LOW  : HIGH; }
+
 inline void begin() {
-    pinMode(PIN_PUMP, OUTPUT);
-    digitalWrite(PIN_PUMP, LOW);  // pump OFF at boot - safety
     pinMode(PIN_BUZZER, OUTPUT);
     digitalWrite(PIN_BUZZER, LOW);
+    // Pump first, at its OFF level - safety at boot for either polarity.
+    digitalWrite(PIN_PUMP, pumpOffLevel());
+    pinMode(PIN_PUMP, OUTPUT);
     nozzleServo.attach(PIN_SERVO);
     nozzleServo.write(SERVO_CENTER);
 }
 
-inline void pumpOn()  { digitalWrite(PIN_PUMP, HIGH); }
-inline void pumpOff() { digitalWrite(PIN_PUMP, LOW);  }
-inline bool pumpRunning() { return digitalRead(PIN_PUMP) == HIGH; }
+inline void pumpOn()  { digitalWrite(PIN_PUMP, pumpOnLevel()); }
+inline void pumpOff() { digitalWrite(PIN_PUMP, pumpOffLevel()); }
+inline bool pumpRunning() { return digitalRead(PIN_PUMP) == pumpOnLevel(); }
 
 inline void aim(uint8_t angle) {
     nozzleServo.write(constrain(angle, SERVO_SWEEP_MIN, SERVO_SWEEP_MAX));
